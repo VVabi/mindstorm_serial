@@ -6,10 +6,6 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::sync::mpsc::Receiver;
 
-
-
-
-
 fn launch_mqtt_thread(tx: Sender<MqttStrMessage>, rx: Receiver<MqttStrMessage>, host: String, port: u32, prefix: String, subscriptions: Vec<String>) {
     //TODO: This will horribly break on non-ASCII strings
 
