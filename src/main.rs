@@ -36,6 +36,7 @@ fn send_via_mqtt(previous_remainder: String, bytes_read: usize, serial_buf: &Vec
                         _ => unreachable!()
                     };
                     let msg = MqttStrMessage {topic: topic, payload: v["payload"].to_string() };
+                    
                     if let Err(m) = tx.send(msg) {
                         log::error!("On push to mqtt thread: {:?}", m);
                     }
@@ -76,7 +77,7 @@ fn serial_to_mqtt(port_ref: Arc<Mutex<Box<dyn serialport::SerialPort>>>, txi: Se
 
 fn main() {
     env_logger::init();
-    let (tx, rx) = launch_mqtt("localhost".to_string(), 1883, vec!["motor/register".to_string(), "motor/set_pwm".to_string()], "".to_string());
+    let (tx, rx) = launch_mqtt("localhost".to_string(), 1883, vec!["motor/register".to_string(), "motor/set_pwm".to_string(), "motor/goto_position".to_string()], "".to_string());
   
     let port_ref = Arc::new(Mutex::new(serialport::new("/dev/ttyACM0", 115_200)
         .timeout(Duration::from_millis(10))
@@ -93,8 +94,8 @@ fn main() {
             Ok(m) => {
                 println!("{}", m.payload);
                 if let Ok(mut port) = port_ref.lock() {
+                    println!("{}", m.payload);
                     let msg = format!(r#"{{"topic": "{}","payload":  {} }}?"#, m.topic, m.payload);
-                    println!("{}", msg);
                     port.write(msg.as_bytes()).expect("Write failed");
                 }
             },

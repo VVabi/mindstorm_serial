@@ -43,6 +43,7 @@ fn launch_mqtt_thread(tx: Sender<MqttStrMessage>, rx: Receiver<MqttStrMessage>, 
 
     loop {
         let msg = rx.recv();
+
         match msg {
             Ok(m) => {
                 let topic = if prefix.is_empty() { m.topic } else {prefix.clone()+"/"+&m.topic};
