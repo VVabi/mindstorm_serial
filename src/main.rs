@@ -78,10 +78,15 @@ fn serial_to_mqtt(port_ref: Arc<Mutex<Box<dyn serialport::SerialPort>>>, txi: Se
 fn main() {
     env_logger::init();
     let (tx, rx) = launch_mqtt("localhost".to_string(), 1883, vec!["motor/register".to_string(), "motor/set_pwm".to_string(), "motor/goto_position".to_string()], "".to_string());
-  
-    let port_ref = Arc::new(Mutex::new(serialport::new("/dev/ttyACM0", 115_200)
-        .timeout(Duration::from_millis(10))
-        .open().expect("Failed to open port")));
+    
+    let mut raw_port = serialport::new("/dev/ttyACM0", 115_200)
+    .timeout(Duration::from_millis(10))
+    .open().expect("Failed to open port");
+
+    // Flush serial port to get clean state (the opposing side must handle this empty message gracefully!)
+    raw_port.write("{}?".as_bytes()).expect("Flush failed");
+    let port_ref = Arc::new(Mutex::new(raw_port));
+
 
     thread::sleep(Duration::from_millis(1000));
     let cloned_port_ref = port_ref.clone();
@@ -96,6 +101,7 @@ fn main() {
                 if let Ok(mut port) = port_ref.lock() {
                     println!("{}", m.payload);
                     let msg = format!(r#"{{"topic": "{}","payload":  {} }}?"#, m.topic, m.payload);
+                    println!("{}", &msg);
                     port.write(msg.as_bytes()).expect("Write failed");
                 }
             },
